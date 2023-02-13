@@ -138,17 +138,14 @@ JsonObject createGpioTypeDependency(JsonArray parent, uint8_t type)
   JsonObject elementType = elementProperties.createNestedObject("type");
 
   JsonArray elementTypeEnum = elementType.createNestedArray("enum");
-  JsonArray elementRequired = element.createNestedArray("required");
   switch (type)
   {
     case GPIO_INPUT:
       elementTypeEnum.add("input");
-      elementRequired.add("input");
       return elementProperties.createNestedObject("input");
 
     case GPIO_OUTPUT:
       elementTypeEnum.add("output");
-      elementRequired.add("output");
       return elementProperties.createNestedObject("output");
 
     default:
@@ -428,7 +425,7 @@ void publishOutputEvent(uint8_t index, uint8_t type, uint8_t state)
 void inputConfigSchema(JsonObject json)
 {
   JsonObject type = json.createNestedObject("type");
-  type["title"] = "Type";
+  type["title"] = "Type (defaults to 'switch')";
   createInputTypeEnum(type);
 
   JsonObject invert = json.createNestedObject("invert");
@@ -443,16 +440,16 @@ void inputConfigSchema(JsonObject json)
 void outputConfigSchema(JsonObject json)
 {
   JsonObject type = json.createNestedObject("type");
-  type["title"] = "Type";
+  type["title"] = "Type (defaults to 'relay')";
   createOutputTypeEnum(type);
 
   JsonObject timerSeconds = json.createNestedObject("timerSeconds");
-  timerSeconds["title"] = "Timer (seconds)";
+  timerSeconds["title"] = "Timer (seconds, defaults to 60s)";
   timerSeconds["type"] = "integer";
   timerSeconds["minimum"] = 1;
 
   JsonObject interlockGpio = json.createNestedObject("interlockGpio");
-  interlockGpio["title"] = "Interlock With GPIO";
+  interlockGpio["title"] = "Interlock GPIO";
   createGpioPinEnum(interlockGpio);
 }
 
@@ -463,7 +460,7 @@ void setConfigSchema()
 
   JsonObject gpios = json.createNestedObject("gpios");
   gpios["title"] = "GPIO Configuration";
-  gpios["description"] = "Add configuration for each GPIO in use on your device. The type defines how the GPIO is being used.";
+  gpios["description"] = "Add configuration for each GPIO in use on your device.";
   gpios["type"] = "array";
 
   JsonObject items = gpios.createNestedObject("items");
@@ -655,7 +652,7 @@ void setCommandSchema()
 
   JsonObject gpios = json.createNestedObject("gpios");
   gpios["title"] = "GPIO Commands";
-  gpios["description"] = "Send commands to one or more GPIOs on your device. You can only send commands to GPIOs which have been configured as ‘output’. The type is used to validate the configuration for this output matches the command. Supported commands are ‘on’ or ‘off’ to change the output state, or ‘query’ to publish the current state to MQTT.";
+  gpios["description"] = "Send commands to one or more GPIOs on your device. You can only send commands to GPIOs which have been configured as 'output'. The type is used to validate the configuration for this output matches the command. Supported commands are 'on' or 'off' to change the output state, or 'query' to publish the current state to MQTT.";
   gpios["type"] = "array";
 
   JsonObject items = gpios.createNestedObject("items");
@@ -667,17 +664,11 @@ void setCommandSchema()
   gpio["title"] = "GPIO Pin";
   createGpioPinEnum(gpio);
 
-  JsonObject output = properties.createNestedObject("output");
-  output["title"] = "Output";
-  output["type"] = "object";
-
-  JsonObject outputProperties = output.createNestedObject("properties");
-
-  JsonObject type = outputProperties.createNestedObject("type");
+  JsonObject type = properties.createNestedObject("type");
   type["title"] = "Type";
   createOutputTypeEnum(type);
 
-  JsonObject command = outputProperties.createNestedObject("command");
+  JsonObject command = properties.createNestedObject("command");
   command["title"] = "Command";
   command["type"] = "string";
   JsonArray commandEnum = command.createNestedArray("enum");
@@ -685,18 +676,15 @@ void setCommandSchema()
   commandEnum.add("on");
   commandEnum.add("off");
 
-  JsonArray outputRequired = output.createNestedArray("required");
-  outputRequired.add("command");
-
   JsonArray required = items.createNestedArray("required");
   required.add("gpio");
-  required.add("output");
+  required.add("command");
 
   // Pass our command schema down to the GPIO32 library
   oxrs.setCommandSchema(json.as<JsonVariant>());
 }
 
-void jsonOutputCommand(JsonVariant json)
+void jsonGpioCommand(JsonVariant json)
 {
   uint8_t index = getIndex(json);
   if (index == INVALID_GPIO_PIN) return;
@@ -753,7 +741,7 @@ void jsonCommand(JsonVariant json)
   {
     for (JsonVariant gpio : json["gpios"].as<JsonArray>())
     {
-      jsonOutputCommand(gpio);
+      jsonGpioCommand(gpio);
     }
   }
 }
