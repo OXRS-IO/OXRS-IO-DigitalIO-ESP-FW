@@ -21,6 +21,10 @@
 #include <OXRS_32.h>                  // ESP32 support
 OXRS_32 oxrs;
 const uint8_t GPIO_PINS[]         = { 2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27 };
+#elif defined(OXRS_LILYGO)
+#include <OXRS_LILYGOPOE.h>           // LilyGO T-ETH-POE support
+OXRS_LILYGOPOE oxrs;
+const uint8_t GPIO_PINS[]         = { 2, 4, 12, 14, 15, 16, 32, 33, 34, 35, 36, 39 };
 #endif
 
 /*--------------------------- Constants -------------------------------*/
