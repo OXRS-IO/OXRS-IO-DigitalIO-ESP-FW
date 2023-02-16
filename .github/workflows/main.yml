@@ -36,7 +36,7 @@ jobs:
         pip install --upgrade platformio
     
     - name: Build release binary
-      run: pio run -e esp32-wifi -e esp8266wifi -e lilygo-eth
+      run: pio run -e esp32-wifi -e esp8266-wifi -e lilygo-eth
 
     - name: Create release
       uses: ncipollo/release-action@v1
