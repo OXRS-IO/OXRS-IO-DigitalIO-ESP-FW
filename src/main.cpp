@@ -21,6 +21,12 @@
 #include <OXRS_32.h>                  // ESP32 support
 OXRS_32 oxrs;
 const uint8_t GPIO_PINS[]         = { 2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27 };
+
+#elif defined(OXRS_ESP8266)
+#include <OXRS_8266.h>                // ESP8266 support
+OXRS_8266 oxrs;
+const uint8_t GPIO_PINS[]         = { 2, 4, 5, 12, 13, 14, 15, 16 };
+
 #elif defined(OXRS_LILYGO)
 #include <OXRS_LILYGOPOE.h>           // LilyGO T-ETH-POE support
 OXRS_LILYGOPOE oxrs;
@@ -85,7 +91,11 @@ void setGpioType(uint8_t index, uint8_t type)
 uint16_t readInputs(void)
 {
   uint16_t result = 0xffff;
+
+  // Not sure how to do this GPIO input register read on an ESP8266?
+  #if defined(ESP32)
   uint32_t inReg = REG_READ(GPIO_IN_REG);
+  #endif
 
   for (uint8_t index = 0; index < GPIO_COUNT; index++)
   {
@@ -93,10 +103,11 @@ uint16_t readInputs(void)
     {
       uint8_t gpio = GPIO_PINS[index];
 
-      if (!bitRead(inReg, gpio)) 
-      { 
-        bitClear(result, index);
-      }
+      #if defined(ESP32)
+      if (!bitRead(inReg, gpio)) { bitClear(result, index); }
+      #else
+      if (!digitalRead(gpio)) { bitClear(result, index); }
+      #endif
     }
   }
   
@@ -480,16 +491,25 @@ void setConfigSchema()
   type["title"] = "GPIO Type";
   createGpioTypeEnum(type);
 
+  // Can only do the fancy UI schema dependencies on an ESP32 as on
+  // an ESP8266 the JSON schema size blows the memory limits
+  #if defined(ESP32)
   JsonObject dependencies = items.createNestedObject("dependencies");
   JsonObject dependenciesType = dependencies.createNestedObject("type");
   JsonArray dependenciesOneOf = dependenciesType.createNestedArray("oneOf");
-
   JsonObject input = createGpioTypeDependency(dependenciesOneOf, GPIO_INPUT);
+  JsonObject output = createGpioTypeDependency(dependenciesOneOf, GPIO_OUTPUT);
+  #else
+  JsonObject input = properties.createNestedObject("input");
+  JsonObject output = properties.createNestedObject("output");
+  #endif
+
+  // Create the input config schema (all optional)
   input["title"] = "Input";
   input["type"] = "object";
   inputConfigSchema(input.createNestedObject("properties"));
 
-  JsonObject output = createGpioTypeDependency(dependenciesOneOf, GPIO_OUTPUT);
+  // Create the output config schema (all optional)
   output["title"] = "Output";
   output["type"] = "object";
   outputConfigSchema(output.createNestedObject("properties"));
