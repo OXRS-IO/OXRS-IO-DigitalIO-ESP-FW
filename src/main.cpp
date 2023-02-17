@@ -1,11 +1,11 @@
 /**
-  ESP32 digital I/O firmware for the Open eXtensible Rack System
+  ESP32/ESP8266 digital I/O firmware for the Open eXtensible Rack System
 
   Documentation:  
-    https://oxrs.io/docs/firmware/digital-io-esp32.html
+    https://oxrs.io/docs/firmware/digital-io-esp.html
 
   GitHub repository:
-    https://github.com/OXRS-IO/OXRS-IO-DigitalIO-ESP32-FW
+    https://github.com/OXRS-IO/OXRS-IO-DigitalIO-ESP-FW
 
   Copyright 2019-2023 SuperHouse Automation Pty Ltd
 */
@@ -15,8 +15,6 @@
 #include <OXRS_Input.h>               // For input handling
 #include <OXRS_Output.h>              // For output handling
 
-// [BJ] I tried adding ESP8266 support but the adoption payload was too
-// [BJ] big and was blowing the stack - would be nice to get that working...
 #if defined(OXRS_ESP32)
 #include <OXRS_32.h>                  // ESP32 support
 OXRS_32 oxrs;
