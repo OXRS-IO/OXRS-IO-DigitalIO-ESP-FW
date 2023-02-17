@@ -87,6 +87,22 @@ void setGpioType(uint8_t index, uint8_t type)
   }
 }
 
+void setTitle(JsonObject json, char * title)
+{
+  // Only include JSON schema titles if running on an ESP32
+  #if defined(ESP32)
+  json["title"] = title;
+  #endif
+}
+
+void setDescription(JsonObject json, char * description)
+{
+  // Only include JSON schema descriptions if running on an ESP32
+  #if defined(ESP32)
+  json["description"] = description;
+  #endif
+}
+
 // Read all input GPIOs at once and make 16-bit result (mimic MCP)
 uint16_t readInputs(void)
 {
@@ -440,31 +456,31 @@ void publishOutputEvent(uint8_t index, uint8_t type, uint8_t state)
 void inputConfigSchema(JsonObject json)
 {
   JsonObject type = json.createNestedObject("type");
-  type["title"] = "Type (defaults to 'switch')";
+  setTitle(type, "Type (defaults to 'switch')");
   createInputTypeEnum(type);
 
   JsonObject invert = json.createNestedObject("invert");
-  invert["title"] = "Invert";
+  setTitle(invert, "Invert");
   invert["type"] = "boolean";
 
   JsonObject disabled = json.createNestedObject("disabled");
-  disabled["title"] = "Disabled";
+  setTitle(disabled, "Disabled");
   disabled["type"] = "boolean";
 }
 
 void outputConfigSchema(JsonObject json)
 {
   JsonObject type = json.createNestedObject("type");
-  type["title"] = "Type (defaults to 'relay')";
+  setTitle(type, "Type (defaults to 'relay')");
   createOutputTypeEnum(type);
 
   JsonObject timerSeconds = json.createNestedObject("timerSeconds");
-  timerSeconds["title"] = "Timer (seconds, defaults to 60s)";
+  setTitle(timerSeconds, "Timer (seconds, defaults to 60s)");
   timerSeconds["type"] = "integer";
   timerSeconds["minimum"] = 1;
 
   JsonObject interlockGpio = json.createNestedObject("interlockGpio");
-  interlockGpio["title"] = "Interlock GPIO";
+  setTitle(interlockGpio, "Interlock GPIO");
   createGpioPinEnum(interlockGpio);
 }
 
@@ -474,8 +490,8 @@ void setConfigSchema()
   DynamicJsonDocument json(JSON_CONFIG_MAX_SIZE);
 
   JsonObject gpios = json.createNestedObject("gpios");
-  gpios["title"] = "GPIO Configuration";
-  gpios["description"] = "Add configuration for each GPIO in use on your device.";
+  setTitle(gpios, "GPIO Configuration");
+  setDescription(gpios, "Add configuration for each GPIO in use on your device.");
   gpios["type"] = "array";
 
   JsonObject items = gpios.createNestedObject("items");
@@ -484,11 +500,11 @@ void setConfigSchema()
   JsonObject properties = items.createNestedObject("properties");
 
   JsonObject gpio = properties.createNestedObject("gpio");
-  gpio["title"] = "GPIO Pin";
+  setTitle(gpio, "GPIO Pin");
   createGpioPinEnum(gpio);
 
   JsonObject type = properties.createNestedObject("type");
-  type["title"] = "GPIO Type";
+  setTitle(type, "GPIO Type");
   createGpioTypeEnum(type);
 
   // Can only do the fancy UI schema dependencies on an ESP32 as on
@@ -505,12 +521,12 @@ void setConfigSchema()
   #endif
 
   // Create the input config schema (all optional)
-  input["title"] = "Input";
+  setTitle(input, "Input");
   input["type"] = "object";
   inputConfigSchema(input.createNestedObject("properties"));
 
   // Create the output config schema (all optional)
-  output["title"] = "Output";
+  setTitle(output, "Output");
   output["type"] = "object";
   outputConfigSchema(output.createNestedObject("properties"));
 
@@ -675,8 +691,8 @@ void setCommandSchema()
   DynamicJsonDocument json(JSON_COMMAND_MAX_SIZE);
 
   JsonObject gpios = json.createNestedObject("gpios");
-  gpios["title"] = "GPIO Commands";
-  gpios["description"] = "Send commands to one or more GPIOs on your device. You can only send commands to GPIOs which have been configured as 'output'. The type is used to validate the configuration for this output matches the command. Supported commands are 'on' or 'off' to change the output state, or 'query' to publish the current state to MQTT.";
+  setTitle(gpios, "GPIO Commands");
+  setDescription(gpios, "Send commands to one or more GPIOs on your device. You can only send commands to GPIOs which have been configured as 'output'. The type is used to validate the configuration for this output matches the command. Supported commands are 'on' or 'off' to change the output state, or 'query' to publish the current state to MQTT.");
   gpios["type"] = "array";
 
   JsonObject items = gpios.createNestedObject("items");
@@ -685,15 +701,15 @@ void setCommandSchema()
   JsonObject properties = items.createNestedObject("properties");
 
   JsonObject gpio = properties.createNestedObject("gpio");
-  gpio["title"] = "GPIO Pin";
+  setTitle(gpio, "GPIO Pin");
   createGpioPinEnum(gpio);
 
   JsonObject type = properties.createNestedObject("type");
-  type["title"] = "Type";
+  setTitle(type, "Type");
   createOutputTypeEnum(type);
 
   JsonObject command = properties.createNestedObject("command");
-  command["title"] = "Command";
+  setTitle(command, "Command");
   command["type"] = "string";
   JsonArray commandEnum = command.createNestedArray("enum");
   commandEnum.add("query");
