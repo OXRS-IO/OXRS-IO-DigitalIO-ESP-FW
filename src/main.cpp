@@ -89,6 +89,7 @@ void setGpioType(uint8_t index, uint8_t type)
 
 void setTitle(JsonObject json, char * title)
 {
+  // Only include JSON schema titles if running on an ESP32
   #if defined(ESP32)
   json["title"] = title;
   #endif
@@ -96,6 +97,7 @@ void setTitle(JsonObject json, char * title)
 
 void setDescription(JsonObject json, char * description)
 {
+  // Only include JSON schema descriptions if running on an ESP32
   #if defined(ESP32)
   json["description"] = description;
   #endif
